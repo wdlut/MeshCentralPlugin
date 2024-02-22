@@ -13,80 +13,114 @@ module.exports.wdplugin = function (parent) {
     obj.meshServer = parent.parent;
     obj.debug = obj.meshServer.debug;
     obj.onlineNodes = [];
-    obj.VIEWS = __dirname + '/views/';
-    obj.exports = [
-      'onWebUIStartupEnd',
-      'openSettings',
-      'goPageStart',
-      'mapUpdate',
-      'resizeContent',
-      'onDeviceRefreshEnd',
-    ];
     
     obj.server_startup = function() {
     };
     
-    obj.onWebUIStartupEnd = function() {
-        var ld = document.querySelectorAll('#p10html > p.mL')[0];
-        var as = Q('plugin_WdPluginStart');
-        if (as) as.parentNode.removeChild(as);
-        var x = '<input type="button" value="WEDA" title="Weda-Aktion" onclick="showShareDevice()">';
-        ld.innerHTML += x;
-        //pluginHandler.routeplus.updateUserRdpLinks();
+    obj.hook_processAgentData = function() {
     };
        
     obj.hook_userLoggedIn = function(user) {
-        var myComp = null;
-        const rcookie = parent.parent.encodeCookie({ userid: user._id, domainid: user.domain }, obj.meshServer.loginCookieEncryptionKey);
+        obj.rcookie = parent.parent.encodeCookie({ userid: user._id, domainid: user.domain }, obj.meshServer.loginCookieEncryptionKey);
         obj.debug('PLUGIN', 'wdplugin', 'User logged in... Processing');
         obj.onlineNodes = Object.keys(obj.meshServer.webserver.wsagents);
-        //console.log('s1', obj.meshServer.webserver.wssessions);
-        //console.log('s2', Object.keys(obj.meshServer.webserver.wssessions2));
     };
     
     obj.hook_agentCoreIsStable = function(myparent, gp) { // check for remaps when an agent logs in
+                    var onlineUsers = Object.keys(obj.meshServer.webserver.wssessions);
+                    obj.startRoute(myparent.dbNodeKey);
+                    
     };
     
-    obj.openSettings = function() {
-        let spage = `<div id="routePlusSettings" style="height:100%;">
-            <div><div class="backButton" tabindex=0 onclick="go(2);" title="Back" onkeypress="if (event.key == 'Enter') go(2);"><div class="backButtonEx"></div></div></div>
-            <h1>My Server Plugins - <span>RoutePlus</span></h1>
-            <iframe id="routePlusiframe" src="/pluginadmin.ashx?pin=routeplus" frameBorder=0 style="width:100%;height:calc(100vh - 245px);max-height:calc(100vh - 245px)"></iframe>
-        </div>`;
-        QV('p2', 0);
-        xxcurrentView = null;
-        document.getElementById('column_l').insertAdjacentHTML( 'beforeend', spage );
-    };
-    
-    obj.goPageStart = function(pageNum, event) {
-        let r = Q('routePlusSettings');
-        if (r) r.parentNode.removeChild(r);
-    };
-    
-    obj.resizeContent = function() {
-        var iFrame = document.getElementById('routePlusiframe');
-        var newHeight = 800;
-        var sHeight = iFrame.contentWindow.document.body.scrollHeight;
-        if (sHeight > newHeight) newHeight = sHeight;
-        iFrame.style.height = newHeight + 'px';
-    };
-    
-    obj.handleAdminReq = function(req, res, user) {
-    };
-    
-    obj.removeMapFromComp = function(id) {
-    };
-    obj.endRoute = function (mapId) {
-    };
-    obj.sendUpdateToUser = function(user, msg) {
-        if (obj.meshServer.webserver.wssessions[user] != null) {
-            obj.meshServer.webserver.wssessions[user].forEach(function(sess) {
-                obj.meshServer.webserver.wssessions2[sess.sessionId].send(JSON.stringify(msg));
-            });
+    obj.startRoute = function(comp) {
+        const command = {
+            action: 'plugin',
+            plugin: 'wdplugin',
+            pluginaction: 'loglevel',
+            loglevel: '4'
+        };
+        //obj.debug('PLUGIN', 'RoutePlus', 'Mapping route to ', map.toNode);
+        try { 
+            obj.debug('PLUGIN', 'wdplugi', 'Starting route  to ' + comp);
+            obj.meshServer.webserver.wsagents[comp].send(JSON.stringify(command)); 
+        } catch (e) { 
+            obj.debug('PLUGIN', 'wdplugin', 'Could not send map to ' + comp); 
         }
     };
-    obj.serveraction = function(command, myparent, grandparent) {
-    };
     
+    obj.uiCustomEvent = function(command, parent) {
+        console.log( "uiCustomEvent. Element: "+command.element+" User: "+
+        command.userid+ " Devices: "+ command.src.selectedDevices.length );
+        switch(command.element) {
+            case 'sharedatei':
+                createShareDatei( command );
+                //displayNotificationMessage("Datei erzeugt", null, null, null, 14);
+                sendEmailIfPossible( command, obj.meshServer );
+                break;
+            default:
+                console.log("Element "+command.element+ " nicht unterstuetzt.");
+        }            
+    };  
     return obj;
 }
+
+function createShareDatei(command) {
+    if ((command.src != null) && (Array.isArray(command.src.selectedDevices))) {
+ 
+        for (var i=0; i<command.src.selectedDevices.length; ++i){
+            const nodeId = command.src.selectedDevices[i].substr(6); // Entferne "[node//]563..."
+            console.log( "NodeId: " + nodeId );
+            const fabrikNr="23-123F";
+            const adresse="Kai Mustermann;Winkeweg2;22334 Ewkikenberg;Germany";
+            const email=command.values.email.trim();
+            const zusatzInfos=command.values.zusatzinfos;
+            const gueltigkeitTage=ermitteleGueltigkeit(command.values.gueltigkeit);
+            const shellCommand="~/MeshCentralPlugin/DeviceSharing/createDeviceSharing.sh"
+            execShellCommand(`${shellCommand} '${nodeId}' '${fabrikNr}' '${adresse}' '${email}' '${zusatzInfos}' ${gueltigkeitTage}`);
+        }
+    }
+}
+
+function ermitteleGueltigkeit(gueltigkeitNr) {
+    let retVal=0;
+    switch( gueltigkeitNr ) {
+      case '1': return( "365" ); //ein Jahr
+      case '2': return(  "31" ); //einen Monat
+      case '3': return(   "7" ); //eine Woche
+      case '4': return(   "1" ); //einen Tag
+      case '5': return(   "0" ); //unendlich
+      default:  return( "0");
+  }
+}
+
+function execShellCommand( command )
+{
+    const { exec } = require("child_process");
+    exec( command, (error, stdout, stderr) => {
+        if (error) {
+            console.log(`error: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.log(`stderr: ${stderr}`);
+            return;
+        }
+        console.log(`stdout: ${stdout}`);
+        return;
+    });
+}
+ 
+function sendEmailIfPossible(command, meshServer)
+{
+    const email=command.values.email.trim();
+    const msg="Diese Mail enthaelt die Zugangsdaten zu Ihrem Remote-Zugang."
+    const file=__dirname+"/WEDA_RemoteControl*";
+
+    if( email != "" && (meshServer.mailserver != null))
+    {
+        const attachmentArry = [ { path: file } ];
+        meshServer.mailserver.sendMail(email, "Remote", msg, null, attachmentArry);
+
+    }
+}
+

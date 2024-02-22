@@ -1,0 +1,7 @@
+# Wrapper um den Aufruf von meshctl.js
+
+meshServerUrl="wss://localhost:49140"
+user="weda"
+pass="weda"
+
+node ~/MeshCentral/meshctrl.js --url "$meshServerUrl"  --loginpass "$pass" --loginuser "$user"  $*

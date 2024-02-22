@@ -1,0 +1,51 @@
+\# Template zum Erstellen einer PDF-Datei mit den Desktop-Sharing-Informationen
+\# mit groff mom.
+\# Infos zur Syntax: https://www.schaffter.ca/mom/momdoc/toc.html
+\# 2024-01-25 JKru
+.PRINTSTYLE TYPESET
+.PAPER A4
+.T_MARGIN 1c
+.FAMILY H
+.PT_SIZE 14
+.START
+
+\#-----------------------------------------------------------------------------------
+
+.MCO
+.TAB 1
+.PT_SIZE 8
+WEDA Dammann & Westerkamp GmbH, Am Bahnhof 10, 49424 Lutten
+.MCR
+.TAB 2
+.PDF_IMAGE -R WEDALogo.pdf 200p 100p SCALE 60
+.MCX
+.PT_SIZE 14
+.BR
+Datum: #date#
+.SP 2
+Adresse:
+#adresse#
+.SP 2
+.PP
+.HEADING 1 "Fernwartungszugang zu Ihrer Anlage mit der Fabriknummer"
+.SP 2
+.CENTER
+.PT_SIZE 18
+\*[BD]#fabriknr#\*[PREV]"
+.PT_SIZE 14
+.BR
+.HEADING 1 "Dieser Zugang ist gültig bis: #enddate#"
+.SP 2
+.PP
+Um die Fernwartung mit dem Handy zu starten, fotografieren Sie den QR-Code oder öffnen Sie Ihre QR-Code-App.
+.PDF_IMAGE qrCode.pdf 231p 231p
+.SP 1
+Der Fernwartungszugang wird im Browser Ihres Handys geöffnet. Um die Fernwartung zu starten, klicken Sie oben links auf "Verbinden".
+.DRH
+.BR
+
+.HEADING 2 "Link zum öffnen der Fernwartung auf dem PC"
+.PDF_WWW_LINK #url# "Hier klicken, um die Fernwartung im Browser zu öffnen"
+.SP 2
+.BR
+Bemerkung: #bemerkung#

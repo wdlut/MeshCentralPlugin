@@ -3,11 +3,11 @@
   "shortName": "wdplugin",
   "version": "0.0.1",
   "author": "JKru",
-  "description": "Test.",
+  "description": "Extensions to MeshCentral.",
   "hasAdminPanel": false,
   "homepage": "https://github.com/wdlut/MeshCentralPlugin",
   "changelogUrl": "",
-  "configUrl": "",
+  "configUrl": "https://raw.githubusercontent.com/wdlut/MeshCentralPlugin/master/config.json",
   "downloadUrl": "https://github.com/wdlut/MeshCentralPlugin/archive/master.zip",
   "repository": {
     "type": "git",
